@@ -148,6 +148,15 @@ rendered as a paired "description" graph (every trans-eQTL target, uniform
 grey edges) and "topology" graph (only annotated/cascade edges, using an
 identical node layout for direct visual cross-reference between the two).
 
+### 7. Future steps
+
+- Cascade pattern right now is only for TF but it can be extensible to the other annotations.
+- Add other topologies
+  * Add other resources of gene to gene relation: miRNAs-target genes, lncRNAs to target genes
+  * Other same dataset topologies: cis-eQTL|trans-caQTL, cis-eQTL|trans-sQTL
+  * Other same dataset exploration of cis-eQTL in cascading nodes
+  * Exterior network topologies based on GO_BP or Kegg pathways to connect the nodes in the network
+
 ## Data provenance note
 
 Every intermediate and final table used throughout this pipeline is derived
