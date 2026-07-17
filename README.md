@@ -76,7 +76,7 @@ conda env create -f Dependencies/R_general_purpose.yaml
 
 ### 2. Standardize all resources into a common gene-pair schema
 
-`Jupyter_notebooks/Preprocessing_datasets_of_pairs.ipynb`
+`Jupyter_notebooks/Preprocessing_datasets_of_pairs_v2.ipynb`
 
 Converts every resource above into a shared schema (`partner1_symbol`,
 `partner1_ensembl_gene_id`, `partner2_symbol`, `partner2_ensembl_gene_id`,
@@ -91,7 +91,7 @@ carried forward: `collectri_strict`, `postar3_strict`, `liana_lenient`,
 
 ### 3. Build the annotated cis/trans-eQTL edge table
 
-`Jupyter_notebooks/Overhaul_classification_factors_v2.ipynb`
+`Jupyter_notebooks/Overhaul_classification_factors_v3.ipynb`
 
 - Loads the base cis/trans-eQTL graph, stratified by *program*
   (`Whole_cis_tras_graph_with_programs.tsv`) — a **factor** is defined as the
@@ -112,7 +112,7 @@ by every downstream notebook.
 ### 4. Edge-level enrichment (permutation-based)
 
 ```bash
-bash Bash_scripts/405_enrichment_array_v2.sh normal
+bash Bash_scripts/405_enrichment_array_v3.sh normal
 ```
 
 Submits one LSF job per (resource × direction × eQTL condition) combination,
@@ -120,14 +120,14 @@ each running `Python_scripts/run_enrichment_test_v3.py` — a degree-preserving
 curveball permutation test (10,000 permutations) comparing observed
 resource-annotation overlap against a randomized null.
 
-`Jupyter_notebooks/Representation_ERs_v4.ipynb` aggregates the per-job result
+`Jupyter_notebooks/Representation_ERs_v5.ipynb` aggregates the per-job result
 files, applies Benjamini-Hochberg correction, computes Poisson confidence
 intervals on fold enrichment, and produces the final forest plot
 (`enrichment_forest_plot_v9`).
 
 ### 5. Factor-level enrichment (Fisher's exact / logistic regression)
 
-`Jupyter_notebooks/Factor_ER_v2.ipynb`
+`Jupyter_notebooks/Factor_ER_v3.ipynb`
 
 A complementary, non-permutation-based test: for every factor
 `(Source_module, Source_gene, program)`, tests whether presence of each
@@ -139,7 +139,7 @@ transparency.
 
 ### 6. Pattern finding and visualization
 
-`Jupyter_notebooks/Overhaul_finding_patterns_v5.ipynb`
+`Jupyter_notebooks/Overhaul_finding_patterns_v6.ipynb`
 
 Identifies and renders specific, mechanistically motivated structural
 patterns among GWAS-colocalized factors (TF cis-eQTL hubs, RBP cis-eQTL

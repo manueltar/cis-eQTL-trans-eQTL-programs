@@ -12,11 +12,12 @@
 #    inside run_enrichment_test_v2.py via the boolean column, not a separate
 #    table join.
 #
-# 2. Resource list is now EXACTLY the 6 resources used to build edge_role /
-#    edge_resource in the R classification - no more, no less. This
-#    deliberately excludes collectri_lenient, postar3_lenient, liana_strict,
-#    and the raw combined-score string_ppi.tsv, none of which were part of
-#    the classification this permutation test is meant to validate/extend.
+# 2. Resource list is now the 7 resources used to build edge_role /
+#    edge_resource in the R classification (originally 6; SCENIC_regulon_
+#    same_dataset added as a 7th - see point 6). This deliberately excludes
+#    collectri_lenient, postar3_lenient, liana_strict, and the raw
+#    combined-score string_ppi.tsv, none of which were part of the
+#    classification this permutation test is meant to validate/extend.
 #    If those are wanted later, they should be a separate, explicitly-scoped
 #    run - not silently folded in here.
 #
@@ -35,6 +36,10 @@
 #    many jobs (forward+reverse) at the SAME per-job memory as before, since
 #    each direction's adjacency/permutation is no larger than the original
 #    single-direction test.
+#
+# scenic_regulon_activator_same_dataset.tsv
+# scenic_regulon_repressor_same_dataset.tsv
+
 
 queue=$1
 
@@ -51,6 +56,9 @@ eqtl_conditions="Across_full Across_GWAS_colocalized Within_full Within_GWAS_col
 
 # --- Resource definitions: file, subtract_file (or "none"), directions (space-separated), mem_gb ---
 # Format: resource_key|annotation_file|subtract_file|directions|mem_gb
+
+
+
 resources=(
   "collectri_strict|collectri_strict.tsv|none|forward reverse|8"
   "postar3_strict|postar3_strict.tsv|none|forward reverse|16"
@@ -58,7 +66,16 @@ resources=(
   "merops_strict|merops_strict.tsv|none|forward reverse|8"
   "string_experimental_strict|string_experimental_strict.tsv|none|undirected|8"
   "string_experimental_lenient_band|string_experimental_lenient.tsv|string_experimental_strict.tsv|undirected|8"
+  "scenic_regulon_activator_same_dataset|scenic_regulon_activator_same_dataset.tsv|none|forward reverse|16"
+  "scenic_regulon_repressor_same_dataset|scenic_regulon_repressor_same_dataset.tsv|none|forward reverse|16"
 )
+
+
+
+
+
+
+
 
 n_submitted=0
 
@@ -92,4 +109,4 @@ done
 
 echo ""
 echo "Total jobs submitted: $n_submitted"
-echo "Expected: (4 directed resources x 2 directions + 2 undirected resources x 1 direction) x 4 eqtl_conditions = (8+2)*4 = 40"
+echo "Expected: (5 directed resources x 2 directions + 2 undirected resources x 1 direction) x 4 eqtl_conditions = (10+2)*4 = 48"
