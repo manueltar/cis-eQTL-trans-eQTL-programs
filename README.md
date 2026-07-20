@@ -127,7 +127,7 @@ intervals on fold enrichment, and produces the final forest plot
 
 ### 5. Factor-level enrichment (Fisher's exact / logistic regression)
 
-`Jupyter_notebooks/Factor_ER_v3.ipynb`
+`Jupyter_notebooks/Factor_ER_v2.ipynb`
 
 A complementary, non-permutation-based test: for every factor
 `(Source_module, Source_gene, program)`, tests whether presence of each
@@ -139,7 +139,7 @@ transparency.
 
 ### 6. Pattern finding and visualization
 
-`Jupyter_notebooks/Overhaul_finding_patterns_v6.ipynb`
+`Jupyter_notebooks/Overhaul_finding_patterns_v11.ipynb`
 
 Identifies and renders specific, mechanistically motivated structural
 patterns among GWAS-colocalized factors (TF cis-eQTL hubs, RBP cis-eQTL
