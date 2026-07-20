@@ -2,7 +2,7 @@
 
 ## Data
 
-Cis-eQTL/trans-eQTL relationships were obtained from a full cis-trans graph spanning multiple immune cell types (n=266,992 rows). A subset of this graph is colocalized with GWAS complex-trait loci; a `graph` field was added by intersecting the full graph with a table of GWAS-colocalized cis/trans-eQTL pairs (identified by matching Source_cell, Source_gene, Target_cell, and Target_gene; every colocalized combination was confirmed present in the full graph before use), and colocalizing trait labels (`ta.label`) were collapsed across cell-type contexts to the (Source_gene, Target_gene, edge.type) level, since none of the reference annotation resources carry cell-type information. Rows were classified by `edge.type` as *Within* (trans-effect observed in the same cell type as the cis-eQTL) or *Across* (different cell type). Four eQTL subsets were tested independently: Within/full, Within/GWAS-colocalized, Across/full, Across/GWAS-colocalized, where "full" denotes all pairs for that edge.type regardless of GWAS colocalization status. Gene symbols were mapped to Ensembl gene IDs using Ensembl GRCh38 release 110 gene annotations throughout.
+ Cis-eQTL/trans-eQTL relationships were obtained from a cis-trans graph spanning multiple immune cell types, stratified by co-expression program membership (n=305,496 rows in the current build). A **factor**  is defined as the combination `(Source_module, Source_gene, program)`, which may span multiple `Source_cell`/`Target_cell` combinations; the same genomic locus/gene pair can therefore be split across several programs, each an independent factor for classification and testing purposes. Rows were classified by `edge.type` as *Within* (same source and target cell type) or *Across* (different source cell type from target cell type), and each factor was further classified by its edge-type composition as `Within-only`, `Across-only`, or `Mixed` (containing both). Under program stratification, no factors in the current build have `Mixed` composition — the finer granularity fully resolves what appeared as mixed composition under the coarser `(Source_module, Source_gene)` definition used previously, verified directly by tabulation rather than assumed. GWAS colocalization is tracked at the individual-edge level (`GWAS_colocalized`, matched on the full `Source_module`/`program`/`Source_cell`/`Target_gene`/`Target_cell` key against a colocalization table, with every colocalized edge confirmed present in the base graph before use), rather than collapsed across cell-type contexts as in the earlier design. Four eQTL subsets were tested independently: Within/full, Within/GWAS-colocalized, Across/full, Across/GWAS-colocalized. Gene symbols were mapped to Ensembl gene IDs using Ensembl GRCh38 release 110 gene annotations throughout, with an ALIAS-based fallback for symbols not resolved by the primary mapping; where the fallback produced two distinct Ensembl IDs sharing one display symbol within the same rendered network, the symbol was disambiguated for that graph only (Ensembl ID suffix appended) to prevent two genuinely distinct genes being merged into a single graph node.
 
 ## Reference annotations
 
@@ -18,6 +18,15 @@ Five resources were tested, each pre-processed into a standardized directed or u
 4. **RNA-binding protein (RBP)–target transcript relationships**, from POSTAR3 CLIP-seq peak data intersected with Ensembl transcript coordinates (strand-matched), tested requiring support from ≥2 independent experimental methods with ≥1 method having confirmed, documented score semantics (CLIPper, PureCLIP, or PARalyzer; strict) or without this filter (lenient).
 
 5. **Peptidase-substrate relationships**, from MEROPS, tested restricted to physiological cleavage events (strict) or all annotated cleavage types including non-physiological and synthetic (lenient).
+
+6. **Same dataset SCENIC+ regulons**,
+
+A sixth and seventh reference annotation were added: TF→target relationships inferred by SCENIC+ from the same scRNA-seq dataset used to define the eQTL cis/trans modules. Regulons were provided as TF(sign)→target-gene-list pairs, where sign (`+`/`-`) denotes an activator or repressor regulon as called by SCENIC+. Activator and repressor regulons were split into two fully independent resources (`SCENIC_regulon_activator_same_dataset`,`SCENIC_regulon_repressor_same_dataset`) rather than one resource with a sign attribute. This allows either to be included, excluded, or weighted differently in any downstream analysis without needing to re-derive the split, and keeps the lower-confidence repressor calls from silently diluting or being conflated with the activator calls in enrichment testing, factor-level testing, or visualization. Both resources use a single stringency tier (presence in the regulon; no confidence/AUC threshold was available from the source data) and were mapped to Ensembl gene IDs via the same GRCh38.110 reference used throughout; a small number of gene symbols resolved to more than one Ensembl ID (segmental duplication/pseudogene pairs and antisense-transcript pairs) were retained via row explosion rather than arbitrarily resolved to a single ID. TF-autoregulation (a regulon target identical to its own TF) was retained and flagged (`is_autoregulation`).
+artifact.
+
+## Addition — cis- and trans-eQTL effect sizes
+
+Effect-size information was subsequently incorporated for both the cis-eQTL association and the trans-eQTL (Mendelian Randomization, MR) relationship: cis-eQTL effect (`most_likely_snp`, `most_likely_snp_beta`): unique per `(Source_module, program, Source_cell, Source_gene)`. trans-eQTL effect (`MR_effect`): merged onto `whole_eqtl_annotated` at the full edge key (`Source_module`, `program`, `Source_cell`,`Source_gene`, `Target_cell`, `Target_gene`). `MR_effect` takes a single magnitude shared across all of that hub's trans-eQTL targets, with only its sign varying per target (`MR_effect = program_beta × Target_gene_direction`. `MR_effect` should therefore be interpreted as encoding, per trans-eQTL target, whether that target's regulatory direction is concordant or discordant with the hub's single program-level effect magnitude — not as an independently estimated, continuously-varying effect size per target gene.
 
 ## Enrichment testing
 
@@ -39,39 +48,25 @@ A gene pair-level, resource-agnostic cascade detector was implemented and applie
 
 ## Pattern-finding and visualization methodology
 
-Six mutually exclusive structural patterns were identified among factors, searched in a fixed order such that a factor already assigned to one pattern was excluded from consideration for subsequent patterns:
+1. **TF_direct_cis_eQTL** cis-eQTL gene is a TF (CollecTRI, SCENIC activator, or SCENIC repressor) with ≥1 forward-direction (cis-eQTL as regulator) direct target among the factor's own trans-eQTL genes. (Note: with SCENIC activator/repressor now separate resources with their own edge-role labels — `Source_TF_activator->Target`, `Source_TF_repressor->Target`.
 
-1. **TF cis-eQTL** (`Within-only`, cis-eQTL gene annotated as a TF for    ≥1 of its own trans-eQTL targets via CollecTRI strict, forward   direction)
-2. **RBP cis-eQTL** (`Within-only`, cis-eQTL gene annotated as an RBP for   ≥1 trans-eQTL target via POSTAR3 strict, forward direction)
-3. **Ligand-Receptor across cell types** (`Across-only`, ≥1 Liana   annotation in either direction)
-4. **Peptidase-substrate across cell types** (`Across-only`, ≥1 MEROPS  annotation in either direction)
-5. **PPI-reciprocal-TF** (remaining factors only; cis-eQTL PPI-linked,   either STRING band, to a trans-eQTL gene independently annotated as   directly regulating the cis-eQTL gene via CollecTRI)
-6. **PPI-to-cascading-TF** (remaining factors only, `Within-only`;   cis-eQTL PPI-linked, either STRING band, to a trans-eQTL gene that is   generically a TF and shows ≥1 cascade edge per the detector in section   5)
+2. **PPI_TF_cascade** cis-eQTL gene is not itself a TF, is PPI-linked (STRING-experimental, either stringency band) to a trans-eQTL target that is generically a TF, and that specific TF partner independently regulates ≥1 sibling trans-eQTL target within the same `(Source_cell, Target_cell)` unit (i.e. the cascade criterion is now evaluated for the specific PPI-partner TF, not "any cascade present anywhere in the unit").
 
-- **Description graph**: all trans-eQTL targets shown as uniform grey
-  edges; only the hub and annotation-bearing targets are labeled (to
-  remain legible for hubs with dozens to hundreds of trans-eQTL targets).
-- **Topology graph**: only annotated and cascade edges shown, colored by
-  resource, with directed relationships shown as arrows (forward:
-  cis-eQTL→target; reverse: target→cis-eQTL) and cascade edges (section 5)
-  rendered as dashed arcs curved to route around the outside of the
-  hub-spoke structure rather than through the center, to remain visually
-  distinguishable from direct hub-originating edges. STRING evidence
-  strength (strict vs. lenient band) is encoded as edge width. Multiple
-  distinct annotated edges sharing the same node pair (e.g. a reciprocal
-  CollecTRI relationship plus an independent STRING PPI edge between the
-  same two genes) are rendered as separate, visually offset curves rather
-  than overlapping.
+3. **Liana_LR_interaction** cis-eQTL gene participates in a Liana ligand-receptor pair with a trans-eQTL target (either direction).
 
-Where available, candidate findings from these patterns were cross-checked
-against a hand-curated literature review (PMID-backed evidence assessment
-per pair, with an explicit "novelty assessment" — known biology in a novel
-context, recapitulation of established biology, or genuinely unverified)
-rather than treated as literature-supported by default; several
-computationally-identified patterns (e.g. the PPI-reciprocal-TF pattern,
-and RBP hub targets generally) had no independent literature corroboration
-and are reported as computational findings only.
+4. **RBP_direct_cis_eQTL** cis-eQTL gene is an RBP (POSTAR3) with ≥1 forward-direction direct target among the factor's trans-eQTL genes.
 
+5. **MEROPS_peptidase_substrate** cis-eQTL gene participates in a MEROPS peptidase-substrate pair with a trans-eQTL target (either direction).
+
+6. **PPI_strict** searched only within factors unclassified by patterns 1–5; cis-eQTL gene has a strict-band (≥0.4) STRING-experimental PPI link to ≥1 trans-eQTL target, no TF/cascade requirement.
+
+7. **PPI_lenient** searched only within factors unclassified by patterns 1–6; identical to pattern 6 but restricted to the lenient PPI band (0.1≤score<0.4).
+
+For each pattern, an odds ratio for `Across-only` vs. `Within-only` composition was computed (Fisher's exact test), with the comparison background restricted to other classified factors only (excluding `Mixed`-composition and unclassified factors) — a narrower, pattern-focused complement to the full-factor-set Fisher's/logistic-regression comparison described in the "factor-level enrichment" section above, answering "is this pattern's composition distinctive relative to other structurally-annotated factors" rather than "relative to all factors."
+
+## visualization: SCENIC sign, effect-size encoding, node ordering.
+
+The description graph (all trans-eQTL targets, previously uniform grey) now colors each hub-spoke edge by the sign of `MR_effect` where available (with an explicit "no MR estimate" category for edges lacking a merged value). Node (spoke) ordering around the hub is now determined by `MR_effect` sign (negative-to-positive), with cascading TFs clustered within each sign block, applied consistently across the description graph and both topology panels so that spatial position remains comparable across all three views of a given factor. Each rendered factor's title additionally reports the cis-eQTL's SNP identifier and effect size (`most_likely_snp`, `most_likely_snp_beta`).
 
 ## Limitation
 
@@ -82,4 +77,4 @@ The permutation null controls for connectivity (degree) within the eQTL network 
 
 ---
 
-*Notes: citations for STRING, CollecTRI, Liana, POSTAR3, MEROPS, and the curveball algorithm (Strona et al. 2014) need to be added via Paperpile. Per-combination assessable-universe sizes (44 combinations) are best reported in a results table/supplement rather than in prose.*
+*Notes: citations for STRING, CollecTRI, Liana, POSTAR3, MEROPS, SCENIC+ and the curveball algorithm (Strona et al. 2014) need to be added via Paperpile. Per-combination assessable-universe sizes (44 combinations) are best reported in a results table/supplement rather than in prose.*
