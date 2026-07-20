@@ -156,6 +156,11 @@ identical node layout for direct visual cross-reference between the two).
   * Other same dataset topologies: cis-eQTL|trans-caQTL, cis-eQTL|trans-sQTL
   * Other same dataset exploration of cis-eQTL in cascading nodes
   * Exterior network topologies based on GO_BP or Kegg pathways to connect the nodes in the network
+  * Exosomes: $ wget -U "Mozilla/5.0" --no-check-certificate "https://www.bio-server.cn/ExMdb/download/file/download_data_7.txt" -O download_data_7.txt
+  * lncRNA interactome: https://bio-bigdata.hrbmu.edu.cn/LncACTdb/LncACT_Download.jsp
+
+  * cis_eQTL_level_exosome_enrichment.ipynb
+  * Global_ER_replotting.ipynb
 
 ## Data provenance note
 
