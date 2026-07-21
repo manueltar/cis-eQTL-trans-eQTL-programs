@@ -127,7 +127,7 @@ intervals on fold enrichment, and produces the final forest plot
 
 ### 5. Factor-level enrichment (Fisher's exact / logistic regression)
 
-`Jupyter_notebooks/Factor_ER_v2.ipynb`
+`Jupyter_notebooks/Factor_ER_v3.ipynb`
 
 A complementary, non-permutation-based test: for every factor
 `(Source_module, Source_gene, program)`, tests whether presence of each
@@ -158,9 +158,8 @@ identical node layout for direct visual cross-reference between the two).
   * Exterior network topologies based on GO_BP or Kegg pathways to connect the nodes in the network
   * Exosomes: $ wget -U "Mozilla/5.0" --no-check-certificate "https://www.bio-server.cn/ExMdb/download/file/download_data_7.txt" -O download_data_7.txt
   * lncRNA interactome: https://bio-bigdata.hrbmu.edu.cn/LncACTdb/LncACT_Download.jsp
-
-  * cis_eQTL_level_exosome_enrichment.ipynb
-  * Global_ER_replotting.ipynb
+  * cis_eQTL_gene_level_enrichment_v2.ipynb
+  * Global_ER_replotting_v2.ipynb
 
 ## Data provenance note
 
